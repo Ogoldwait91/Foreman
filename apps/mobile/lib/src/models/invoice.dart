@@ -11,6 +11,10 @@ class Invoice {
   final double vatRate; // e.g., 0.2 for 20%
   final InvoiceStatus status;
 
+  // New (for records)
+  final String? jobId;    // optional job association
+  final String? pdfPath;  // saved PDF path
+
   Invoice({
     required this.id,
     required this.clientId,
@@ -19,13 +23,26 @@ class Invoice {
     this.items = const [],
     this.vatRate = 0.20,
     this.status = InvoiceStatus.draft,
+    this.jobId,
+    this.pdfPath,
   });
 
-  double get subtotal =>
-      items.fold(0.0, (a, i) => a + i.lineTotal);
-
-  double get vat =>
-      items.where((i) => i.vatApplicable).fold(0.0, (a, i) => a + (i.lineTotal * vatRate));
-
+  double get subtotal => items.fold(0.0, (a, i) => a + i.lineTotal);
+  double get vat => items
+      .where((i) => i.vatApplicable)
+      .fold(0.0, (a, i) => a + (i.lineTotal * vatRate));
   double get total => subtotal + vat;
+
+  // copyWith for updating pdfPath later
+  Invoice copyWith({String? pdfPath}) => Invoice(
+    id: id,
+    clientId: clientId,
+    issueDate: issueDate,
+    dueDate: dueDate,
+    items: items,
+    vatRate: vatRate,
+    status: status,
+    jobId: jobId,
+    pdfPath: pdfPath ?? this.pdfPath,
+  );
 }

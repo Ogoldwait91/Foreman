@@ -1,9 +1,13 @@
 ﻿import "package:flutter/material.dart";
+import "package:printing/printing.dart";
+import "package:open_filex/open_filex.dart";
 import "../theme.dart";
 import "../data/app_store.dart";
 import "../models/invoice.dart";
 import "../models/client.dart";
 import "../utils/utils.dart";
+import "../services/pdf_service.dart";
+import "../services/storage_service.dart";
 
 class InvoicePreviewScreen extends StatelessWidget {
   final String invoiceId;
@@ -21,6 +25,31 @@ class InvoicePreviewScreen extends StatelessWidget {
       orElse: () => Client(id: "unknown", name: "Unknown"),
     );
 
+    Future<void> sharePdf() async {
+      final data = await PdfService.buildInvoicePdf(client: client, invoice: inv, businessName: "Foreman User");
+      await Printing.sharePdf(bytes: data, filename: "invoice_${inv.id}.pdf");
+    }
+
+    Future<void> savePdf() async {
+      final data = await PdfService.buildInvoicePdf(client: client, invoice: inv, businessName: "Foreman User");
+      final path = await StorageService.saveInvoicePdf(
+        data,
+        issued: inv.issueDate,
+        fileName: "invoice_${inv.id}",
+      );
+      AppStore().setInvoicePdfPath(inv.id, path);
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Saved to $path")));
+    }
+
+    Future<void> viewPdf() async {
+      if (inv.pdfPath == null) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Save the PDF first.")));
+        return;
+      }
+      await OpenFilex.open(inv.pdfPath!);
+    }
+
     return Scaffold(
       backgroundColor: ForemanColors.navy,
       appBar: AppBar(
@@ -37,7 +66,7 @@ class InvoicePreviewScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.symmetric(vertical: 8),
         children: [
-          // Header card
+          // Header
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -64,7 +93,7 @@ class InvoicePreviewScreen extends StatelessWidget {
             ),
           ),
 
-          // Items card
+          // Items
           Card(
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
@@ -75,17 +104,16 @@ class InvoicePreviewScreen extends StatelessWidget {
                   ),
                   const Divider(height: 1),
                   ...inv.items.map((it) => ListTile(
-                        title: Text(it.description),
-                        subtitle: Text("Qty ${it.quantity}  •  £${it.unitPrice.toStringAsFixed(2)}"
-                            "${it.vatApplicable ? '  •  VAT' : ''}"),
-                        trailing: Text(money(it.lineTotal), style: const TextStyle(fontWeight: FontWeight.w700)),
-                      )),
+                    title: Text(it.description),
+                    subtitle: Text("Qty ${it.quantity}  •  £${it.unitPrice.toStringAsFixed(2)}${it.vatApplicable ? '  •  VAT' : ''}"),
+                    trailing: Text(money(it.lineTotal), style: const TextStyle(fontWeight: FontWeight.w700)),
+                  )),
                 ],
               ),
             ),
           ),
 
-          // Totals card
+          // Totals
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -100,33 +128,23 @@ class InvoicePreviewScreen extends StatelessWidget {
             ),
           ),
 
-          // CTA bar
+          // CTA row
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
+            child: Column(
               children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Share/Send coming next (PDF).")),
-                      );
-                    },
-                    icon: const Icon(Icons.ios_share),
-                    label: const Text("Share"),
-                  ),
+                Row(
+                  children: [
+                    Expanded(child: OutlinedButton.icon(onPressed: sharePdf, icon: const Icon(Icons.ios_share), label: const Text("Share PDF"))),
+                    const SizedBox(width: 12),
+                    Expanded(child: ElevatedButton.icon(onPressed: savePdf, icon: const Icon(Icons.save), label: const Text("Save PDF"))),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Mark as Sent (placeholder).")),
-                      );
-                    },
-                    icon: const Icon(Icons.send),
-                    label: const Text("Mark sent"),
-                  ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(child: OutlinedButton.icon(onPressed: viewPdf, icon: const Icon(Icons.picture_as_pdf), label: const Text("View PDF"))),
+                  ],
                 ),
               ],
             ),

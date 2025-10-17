@@ -12,7 +12,6 @@ class AppStore extends ChangeNotifier {
   final List<Client> clients = [];
   final List<Invoice> invoices = [];
 
-  // seed a demo client & invoice
   void seedIfEmpty() {
     if (clients.isEmpty) {
       final c = Client(id: quickId("client"), name: "Acme Bathrooms", email: "info@acmebath.co.uk");
@@ -40,7 +39,6 @@ class AppStore extends ChangeNotifier {
     required double unitPrice,
     required bool vatApplicable,
   }) {
-    // upsert client by name (simple)
     Client client;
     final idx = clients.indexWhere((c) => c.name.trim().toLowerCase() == clientName.trim().toLowerCase());
     if (idx >= 0) {
@@ -63,5 +61,13 @@ class AppStore extends ChangeNotifier {
 
     invoices.add(inv);
     notifyListeners();
+  }
+
+  void setInvoicePdfPath(String invoiceId, String path) {
+    final i = invoices.indexWhere((x) => x.id == invoiceId);
+    if (i >= 0) {
+      invoices[i] = invoices[i].copyWith(pdfPath: path);
+      notifyListeners();
+    }
   }
 }
