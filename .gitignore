@@ -1,0 +1,18 @@
+﻿# Flutter/Dart
+.dart_tool/
+.packages
+build/
+ios/Pods/
+pubspec.lock
+
+# Node/functions
+node_modules/
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Secrets
+.env
+.env.*

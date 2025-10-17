@@ -1,0 +1,7 @@
+﻿name: placeholder
+on: [push]
+jobs:
+  noop:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "CI will be added once the app skeleton is in."
