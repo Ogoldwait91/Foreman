@@ -1,4 +1,4 @@
-﻿import "invoice_item.dart";
+import "invoice_item.dart";
 
 enum InvoiceStatus { draft, sent, paid, overdue }
 
@@ -26,7 +26,9 @@ class Invoice {
   });
 
   double get subtotal => items.fold(0.0, (a, i) => a + i.lineTotal);
-  double get vat => items.where((i) => i.vatApplicable).fold(0.0, (a, i) => a + (i.lineTotal * vatRate));
+  double get vat => items
+      .where((i) => i.vatApplicable)
+      .fold(0.0, (a, i) => a + (i.lineTotal * vatRate));
   double get total => subtotal + vat;
 
   // now supports both pdfPath and vatRate updates

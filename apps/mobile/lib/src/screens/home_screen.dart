@@ -1,4 +1,4 @@
-﻿import "package:flutter/material.dart";
+import "package:flutter/material.dart";
 import "../theme.dart";
 import "../widgets/balance_ring.dart";
 import "../data/app_store.dart";
@@ -19,20 +19,39 @@ class HomeScreen extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-          child: Text("Good morning 👋", style: Theme.of(context).textTheme.titleMedium),
+          child: Text(
+            "Good morning 👋",
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Text("Your balance", style: Theme.of(context).textTheme.headlineMedium),
+          child: Text(
+            "Your balance",
+            style: Theme.of(context).textTheme.headlineMedium,
+          ),
         ),
         const SizedBox(height: 8),
         Center(
-          child: BalanceRing(size: 220, yours: yours, vat: vatOwed, tax: taxOwed),
+          child: BalanceRing(
+            size: 220,
+            yours: yours,
+            vat: vatOwed,
+            tax: taxOwed,
+          ),
         ),
         const SizedBox(height: 8),
         _kvRow("Income this month (paid)", "£${gross.toStringAsFixed(2)}"),
-        _kvRow("VAT set aside", "£${vatOwed.toStringAsFixed(2)}", color: ForemanColors.amber),
-        _kvRow("Tax reserved", "£${taxOwed.toStringAsFixed(2)}", color: ForemanColors.green),
+        _kvRow(
+          "VAT set aside",
+          "£${vatOwed.toStringAsFixed(2)}",
+          color: ForemanColors.amber,
+        ),
+        _kvRow(
+          "Tax reserved",
+          "£${taxOwed.toStringAsFixed(2)}",
+          color: ForemanColors.green,
+        ),
         const SizedBox(height: 20),
       ],
     );
@@ -44,8 +63,17 @@ class HomeScreen extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(k, style: const TextStyle(color: ForemanColors.white, fontWeight: FontWeight.w500)),
-          Text(v, style: TextStyle(color: color, fontWeight: FontWeight.w700)),
+          Text(
+            k,
+            style: const TextStyle(
+              color: ForemanColors.white,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          Text(
+            v,
+            style: TextStyle(color: color, fontWeight: FontWeight.w700),
+          ),
         ],
       ),
     );

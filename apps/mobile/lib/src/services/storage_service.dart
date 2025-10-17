@@ -1,16 +1,18 @@
-﻿import "dart:io";
+import "dart:io";
 import "dart:typed_data";
 import "package:path_provider/path_provider.dart";
 
 class StorageService {
-  static Future<Directory> _baseArchiveDir(DateTime d, {String? jobSlug, String sub = ""}) async {
+  static Future<Directory> _baseArchiveDir(
+    DateTime d, {
+    String? jobSlug,
+    String sub = "",
+  }) async {
     final docs = await getApplicationDocumentsDirectory();
     final yyyy = d.year.toString().padLeft(4, "0");
     final mm = d.month.toString().padLeft(2, "0");
 
-    final parts = <String>[
-      docs.path, "Foreman", "archive", yyyy, mm,
-    ];
+    final parts = <String>[docs.path, "Foreman", "archive", yyyy, mm];
 
     if (jobSlug != null && jobSlug.isNotEmpty) {
       parts.addAll(["jobs", jobSlug]);
@@ -31,7 +33,11 @@ class StorageService {
     required String fileName,
     String? jobSlug,
   }) async {
-    final dir = await _baseArchiveDir(issued, jobSlug: jobSlug, sub: "invoices");
+    final dir = await _baseArchiveDir(
+      issued,
+      jobSlug: jobSlug,
+      sub: "invoices",
+    );
     final file = File("${dir.path}${Platform.pathSeparator}$fileName.pdf");
     await file.writeAsBytes(bytes, flush: true);
     return file.path;

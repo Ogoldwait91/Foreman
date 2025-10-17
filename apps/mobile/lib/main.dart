@@ -1,4 +1,4 @@
-﻿import "package:flutter/material.dart";
+import "package:flutter/material.dart";
 import "src/theme.dart";
 import "src/screens/home_screen.dart";
 import "src/screens/invoices_screen.dart";
@@ -50,10 +50,26 @@ class _ForemanAppState extends State<ForemanApp> {
               labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
               onDestinationSelected: (i) => setState(() => _index = i),
               destinations: const [
-                NavigationDestination(icon: Icon(Icons.pie_chart_outline), selectedIcon: Icon(Icons.pie_chart), label: "Balance"),
-                NavigationDestination(icon: Icon(Icons.receipt_long_outlined), selectedIcon: Icon(Icons.receipt_long), label: "Invoices"),
-                NavigationDestination(icon: Icon(Icons.payments_outlined), selectedIcon: Icon(Icons.payments), label: "Payments"),
-                NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person), label: "Profile"),
+                NavigationDestination(
+                  icon: Icon(Icons.pie_chart_outline),
+                  selectedIcon: Icon(Icons.pie_chart),
+                  label: "Balance",
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.receipt_long_outlined),
+                  selectedIcon: Icon(Icons.receipt_long),
+                  label: "Invoices",
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.payments_outlined),
+                  selectedIcon: Icon(Icons.payments),
+                  label: "Payments",
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.person_outline),
+                  selectedIcon: Icon(Icons.person),
+                  label: "Profile",
+                ),
               ],
             ),
           ),

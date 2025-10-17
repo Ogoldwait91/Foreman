@@ -1,4 +1,4 @@
-﻿import "dart:typed_data";
+import "dart:typed_data";
 import "package:intl/intl.dart";
 import "package:pdf/pdf.dart";
 import "package:pdf/widgets.dart" as pw;
@@ -31,18 +31,41 @@ class PdfService {
           pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              pw.Text("Foreman", style: pw.TextStyle(color: teal, fontWeight: pw.FontWeight.bold, fontSize: 22)),
-              pw.Text("Built for the trades.", style: pw.TextStyle(color: white, fontSize: 12)),
+              pw.Text(
+                "Foreman",
+                style: pw.TextStyle(
+                  color: teal,
+                  fontWeight: pw.FontWeight.bold,
+                  fontSize: 22,
+                ),
+              ),
+              pw.Text(
+                "Built for the trades.",
+                style: pw.TextStyle(color: white, fontSize: 12),
+              ),
             ],
           ),
           pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.end,
             children: [
-              pw.Text("INVOICE", style: pw.TextStyle(color: white, fontWeight: pw.FontWeight.bold, fontSize: 16)),
+              pw.Text(
+                "INVOICE",
+                style: pw.TextStyle(
+                  color: white,
+                  fontWeight: pw.FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
               pw.SizedBox(height: 6),
-              pw.Text("Issued: ${_d(invoice.issueDate)}", style: pw.TextStyle(color: white, fontSize: 10)),
+              pw.Text(
+                "Issued: ${_d(invoice.issueDate)}",
+                style: pw.TextStyle(color: white, fontSize: 10),
+              ),
               if (invoice.dueDate != null)
-                pw.Text("Due: ${_d(invoice.dueDate!)}", style: pw.TextStyle(color: white, fontSize: 10)),
+                pw.Text(
+                  "Due: ${_d(invoice.dueDate!)}",
+                  style: pw.TextStyle(color: white, fontSize: 10),
+                ),
             ],
           ),
         ],
@@ -58,7 +81,10 @@ class PdfService {
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                pw.Text("Billed To", style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                pw.Text(
+                  "Billed To",
+                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                ),
                 pw.SizedBox(height: 4),
                 pw.Text(client.name),
                 if (client.email != null) pw.Text(client.email!),
@@ -72,7 +98,10 @@ class PdfService {
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                pw.Text("From", style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                pw.Text(
+                  "From",
+                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                ),
                 pw.SizedBox(height: 4),
                 pw.Text(businessName),
                 pw.Text("foreman.app (demo)"),
@@ -86,7 +115,12 @@ class PdfService {
     pw.Widget itemsTable() => pw.Container(
       margin: const pw.EdgeInsets.symmetric(horizontal: 12),
       child: pw.Table(
-        border: pw.TableBorder(horizontalInside: pw.BorderSide(color: PdfColor.fromInt(0xFFCCCCCC), width: .5)),
+        border: pw.TableBorder(
+          horizontalInside: pw.BorderSide(
+            color: PdfColor.fromInt(0xFFCCCCCC),
+            width: .5,
+          ),
+        ),
         columnWidths: {
           0: const pw.FlexColumnWidth(6),
           1: const pw.FlexColumnWidth(2),
@@ -95,7 +129,9 @@ class PdfService {
         },
         children: [
           pw.TableRow(
-            decoration: const pw.BoxDecoration(color: PdfColor.fromInt(0xFFEFF2F7)),
+            decoration: const pw.BoxDecoration(
+              color: PdfColor.fromInt(0xFFEFF2F7),
+            ),
             children: [
               _th("Description"),
               _th("Qty"),
@@ -103,14 +139,16 @@ class PdfService {
               _th("Line"),
             ],
           ),
-          ...invoice.items.map((it) => pw.TableRow(
-            children: [
-              _td(it.description),
-              _td("${it.quantity}"),
-              _td(_money.format(it.unitPrice)),
-              _td(_money.format(it.lineTotal)),
-            ],
-          )),
+          ...invoice.items.map(
+            (it) => pw.TableRow(
+              children: [
+                _td(it.description),
+                _td("${it.quantity}"),
+                _td(_money.format(it.unitPrice)),
+                _td(_money.format(it.lineTotal)),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -125,7 +163,11 @@ class PdfService {
             child: pw.Column(
               children: [
                 _kv("Subtotal", _money.format(invoice.subtotal)),
-                _kv("VAT (${(invoice.vatRate*100).toStringAsFixed(0)}%)", _money.format(invoice.vat), color: PdfColor.fromInt(0xFFFFC107)),
+                _kv(
+                  "VAT (${(invoice.vatRate * 100).toStringAsFixed(0)}%)",
+                  _money.format(invoice.vat),
+                  color: PdfColor.fromInt(0xFFFFC107),
+                ),
                 pw.Divider(),
                 _kv("Total", _money.format(invoice.total), big: true),
               ],
@@ -149,7 +191,12 @@ class PdfService {
           pw.SizedBox(height: 8),
           totals(),
           pw.SizedBox(height: 24),
-          pw.Center(child: pw.Text("Thank you for your business.", style: pw.TextStyle(color: PdfColor.fromInt(0xFF666666)))),
+          pw.Center(
+            child: pw.Text(
+              "Thank you for your business.",
+              style: pw.TextStyle(color: PdfColor.fromInt(0xFF666666)),
+            ),
+          ),
         ],
       ),
     );
@@ -167,13 +214,25 @@ class PdfService {
     child: pw.Text(s),
   );
 
-  static pw.Widget _kv(String k, String v, {PdfColor? color, bool big = false}) => pw.Padding(
+  static pw.Widget _kv(
+    String k,
+    String v, {
+    PdfColor? color,
+    bool big = false,
+  }) => pw.Padding(
     padding: const pw.EdgeInsets.symmetric(vertical: 4),
     child: pw.Row(
       mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
       children: [
         pw.Text(k),
-        pw.Text(v, style: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: color, fontSize: big ? 14 : 12)),
+        pw.Text(
+          v,
+          style: pw.TextStyle(
+            fontWeight: pw.FontWeight.bold,
+            color: color,
+            fontSize: big ? 14 : 12,
+          ),
+        ),
       ],
     ),
   );

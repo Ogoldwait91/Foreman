@@ -1,4 +1,4 @@
-﻿String quickId([String prefix = "id"]) {
+String quickId([String prefix = "id"]) {
   final ms = DateTime.now().millisecondsSinceEpoch;
   return "$prefix-$ms";
 }

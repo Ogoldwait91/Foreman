@@ -61,9 +61,7 @@ class AppStore extends ChangeNotifier {
     final match = jobs.indexWhere(
       (j) => j.name.trim().toLowerCase() == name.trim().toLowerCase(),
     );
-    if (match >= 0) {
-      return jobs[match];
-    }
+    if (match >= 0) return jobs[match];
     final j = Job(id: quickId("job"), name: name.trim(), clientId: clientId);
     jobs.add(j);
     notifyListeners();
