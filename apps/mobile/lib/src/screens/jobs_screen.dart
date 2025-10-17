@@ -35,8 +35,9 @@ class JobsScreen extends StatelessWidget {
                     ),
                     ElevatedButton(
                       onPressed: () {
-                        if (ctrl.text.trim().isNotEmpty)
+                        if (ctrl.text.trim().isNotEmpty) {
                           AppStore().addJob(ctrl.text.trim());
+                        }
                         Navigator.pop(ctx);
                       },
                       child: const Text("Create"),

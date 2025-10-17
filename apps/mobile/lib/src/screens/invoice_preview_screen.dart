@@ -1,4 +1,4 @@
-﻿import "package:flutter/material.dart";
+import "package:flutter/material.dart";
 import "package:printing/printing.dart";
 import "package:open_filex/open_filex.dart";
 import "../theme.dart";
@@ -55,9 +55,8 @@ class InvoicePreviewScreen extends StatelessWidget {
         jobSlug: jobSlug,
       );
       AppStore().setInvoicePdfPath(inv.id, path);
-      // ignore: use_build_context_synchronously
+      if (!context.mounted) return; // ← add this line
       ScaffoldMessenger.of(
-if (!context.mounted) return;
         context,
       ).showSnackBar(SnackBar(content: Text("Saved to $path")));
     }
@@ -78,7 +77,7 @@ if (!context.mounted) return;
         backgroundColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
         title: Text(
-          job?.name.isNotEmpty == true ? "Invoice â€¢ ${job!.name}" : "Invoice",
+          job?.name.isNotEmpty == true ? "Invoice • ${job!.name}" : "Invoice",
         ),
         actions: [
           Padding(

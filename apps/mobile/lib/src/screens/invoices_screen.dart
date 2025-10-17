@@ -14,70 +14,64 @@ class InvoicesScreen extends StatelessWidget {
 
   Color _statusColor(InvoiceStatus s) {
     switch (s) {
-      case InvoiceStatus.draft:
-        return ForemanColors.amber;
-      case InvoiceStatus.sent:
-        return ForemanColors.white;
-      case InvoiceStatus.paid:
-        return ForemanColors.green;
-      case InvoiceStatus.overdue:
-        return ForemanColors.magenta;
+      case InvoiceStatus.draft: return ForemanColors.amber;
+      case InvoiceStatus.sent: return ForemanColors.white;
+      case InvoiceStatus.paid: return ForemanColors.green;
+      case InvoiceStatus.overdue: return ForemanColors.magenta;
     }
   }
 
   String _statusText(InvoiceStatus s) {
     switch (s) {
-      case InvoiceStatus.draft:
-        return "Draft";
-      case InvoiceStatus.sent:
-        return "Sent";
-      case InvoiceStatus.paid:
-        return "Paid";
-      case InvoiceStatus.overdue:
-        return "Overdue";
+      case InvoiceStatus.draft: return "Draft";
+      case InvoiceStatus.sent: return "Sent";
+      case InvoiceStatus.paid: return "Paid";
+      case InvoiceStatus.overdue: return "Overdue";
     }
   }
 
-  Future<void> _sharePdf(
-    BuildContext context,
-    Invoice inv,
-    Client client,
-  ) async {
-    final data = await PdfService.buildInvoicePdf(
-      client: client,
-      invoice: inv,
-      businessName: "Foreman User",
-    );
+  String _dueHint(Invoice inv) {
+    if (inv.dueDate == null) return "";
+    final today = DateTime.now();
+    final due = DateTime(inv.dueDate!.year, inv.dueDate!.month, inv.dueDate!.day);
+    final t = DateTime(today.year, today.month, today.day);
+    final delta = due.difference(t).inDays;
+    if (delta > 0) return " • due in $delta day${delta==1?'':'s'}";
+    if (delta == 0) return " • due today";
+    return " • overdue by ${-delta} day${delta==-1?'':'s'}";
+  }
+
+  Future<void> _sharePdf(BuildContext context, Invoice inv, Client client) async {
+    final data = await PdfService.buildInvoicePdf(client: client, invoice: inv, businessName: "Foreman User");
     await Printing.sharePdf(bytes: data, filename: "invoice_${inv.id}.pdf");
   }
 
-  Future<void> _savePdf(
-    BuildContext context,
-    Invoice inv,
-    Client client,
-  ) async {
-    final data = await PdfService.buildInvoicePdf(
-      client: client,
-      invoice: inv,
-      businessName: "Foreman User",
-    );
-    final path = await StorageService.saveInvoicePdf(
-      data,
-      issued: inv.issueDate,
-      fileName: "invoice_${inv.id}",
-    );
+  Future<void> _savePdf(BuildContext context, Invoice inv, Client client) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final data = await PdfService.buildInvoicePdf(client: client, invoice: inv, businessName: "Foreman User");
+    final path = await StorageService.saveInvoicePdf(data, issued: inv.issueDate, fileName: "invoice_${inv.id}");
     AppStore().setInvoicePdfPath(inv.id, path);
-    // ignore: use_build_context_synchronously
-    ScaffoldMessenger.of(
-if (!context.mounted) return;
-      context,
-    ).showSnackBar(SnackBar(content: Text("Saved to $path")));
+    messenger.showSnackBar(SnackBar(content: Text("Saved to $path")));
   }
 
   @override
   Widget build(BuildContext context) {
     final store = AppStore();
-    final invoices = store.invoices;
+    final invoices = [...store.invoices]
+      ..sort((a,b) {
+        // sort: Overdue first, then Sent close to due, then Draft, then Paid
+        int rank(Invoice i) {
+          switch (i.status) {
+            case InvoiceStatus.overdue: return 0;
+            case InvoiceStatus.sent: return 1;
+            case InvoiceStatus.draft: return 2;
+            case InvoiceStatus.paid: return 3;
+          }
+        }
+        final r = rank(a).compareTo(rank(b));
+        if (r != 0) return r;
+        return (b.dueDate ?? DateTime(2100)).compareTo(a.dueDate ?? DateTime(2100));
+      });
 
     return Scaffold(
       backgroundColor: ForemanColors.navy,
@@ -87,13 +81,9 @@ if (!context.mounted) return;
         surfaceTintColor: Colors.transparent,
       ),
       body: invoices.isEmpty
-          ? _EmptyInvoices(
-              onNew: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const NewInvoiceScreen()),
-                );
-              },
-            )
+          ? _EmptyInvoices(onNew: () {
+              Navigator.of(context).push(MaterialPageRoute(builder: (_) => const NewInvoiceScreen()));
+            })
           : ListView.builder(
               itemCount: invoices.length,
               itemBuilder: (_, i) {
@@ -105,65 +95,36 @@ if (!context.mounted) return;
 
                 return Dismissible(
                   key: ValueKey(inv.id),
-                  background: _swipeBg(
-                    Icons.check_circle,
-                    "Mark paid",
-                    ForemanColors.green,
-                  ),
-                  secondaryBackground: _swipeBg(
-                    Icons.outgoing_mail,
-                    "Mark sent",
-                    ForemanColors.white,
-                  ),
+                  background: _swipeBg(Icons.check_circle, "Mark paid", ForemanColors.green),
+                  secondaryBackground: _swipeBg(Icons.outgoing_mail, "Mark sent", ForemanColors.white),
                   confirmDismiss: (direction) async {
                     if (direction == DismissDirection.startToEnd) {
                       AppStore().markInvoicePaid(inv.id);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Marked as Paid")),
-                      );
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Marked as Paid")));
                     } else {
                       AppStore().markInvoiceSent(inv.id);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Marked as Sent")),
-                      );
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Marked as Sent")));
                     }
-                    // Return false so the tile isn't removed from the list.
                     return false;
                   },
                   child: Card(
                     child: ListTile(
                       onTap: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              InvoicePreviewScreen(invoiceId: inv.id),
-                        ),
+                        MaterialPageRoute(builder: (_) => InvoicePreviewScreen(invoiceId: inv.id)),
                       ),
                       title: Text(client.name),
-                      subtitle: Text(
-                        "${_statusText(inv.status)}  â€¢  ${inv.issueDate.toLocal().toIso8601String().substring(0, 10)}",
-                      ),
+                      subtitle: Text("${_statusText(inv.status)}  •  ${inv.issueDate.toLocal().toIso8601String().substring(0,10)}${_dueHint(inv)}"),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(
-                            "Â£${inv.total.toStringAsFixed(2)}",
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              color: _statusColor(inv.status),
-                            ),
-                          ),
+                          Text("£${inv.total.toStringAsFixed(2)}",
+                              style: TextStyle(fontWeight: FontWeight.w700, color: _statusColor(inv.status))),
                           const SizedBox(width: 6),
                           PopupMenuButton<String>(
                             onSelected: (v) async {
                               switch (v) {
                                 case "preview":
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (_) => InvoicePreviewScreen(
-                                        invoiceId: inv.id,
-                                      ),
-                                    ),
-                                  );
+                                  Navigator.of(context).push(MaterialPageRoute(builder: (_) => InvoicePreviewScreen(invoiceId: inv.id)));
                                   break;
                                 case "share":
                                   await _sharePdf(context, inv, client);
@@ -179,43 +140,13 @@ if (!context.mounted) return;
                                   break;
                               }
                             },
-                            itemBuilder: (ctx) => [
-                              const PopupMenuItem(
-                                value: "preview",
-                                child: ListTile(
-                                  leading: Icon(Icons.visibility),
-                                  title: Text("Preview"),
-                                ),
-                              ),
-                              const PopupMenuItem(
-                                value: "share",
-                                child: ListTile(
-                                  leading: Icon(Icons.ios_share),
-                                  title: Text("Share PDF"),
-                                ),
-                              ),
-                              const PopupMenuItem(
-                                value: "save",
-                                child: ListTile(
-                                  leading: Icon(Icons.save),
-                                  title: Text("Save PDF"),
-                                ),
-                              ),
-                              const PopupMenuDivider(),
-                              const PopupMenuItem(
-                                value: "markPaid",
-                                child: ListTile(
-                                  leading: Icon(Icons.check_circle),
-                                  title: Text("Mark paid"),
-                                ),
-                              ),
-                              const PopupMenuItem(
-                                value: "markSent",
-                                child: ListTile(
-                                  leading: Icon(Icons.outgoing_mail),
-                                  title: Text("Mark sent"),
-                                ),
-                              ),
+                            itemBuilder: (ctx) => const [
+                              PopupMenuItem(value: "preview", child: ListTile(leading: Icon(Icons.visibility), title: Text("Preview"))),
+                              PopupMenuItem(value: "share", child: ListTile(leading: Icon(Icons.ios_share), title: Text("Share PDF"))),
+                              PopupMenuItem(value: "save", child: ListTile(leading: Icon(Icons.save), title: Text("Save PDF"))),
+                              PopupMenuDivider(),
+                              PopupMenuItem(value: "markPaid", child: ListTile(leading: Icon(Icons.check_circle), title: Text("Mark paid"))),
+                              PopupMenuItem(value: "markSent", child: ListTile(leading: Icon(Icons.outgoing_mail), title: Text("Mark sent"))),
                             ],
                           ),
                         ],
@@ -226,9 +157,7 @@ if (!context.mounted) return;
               },
             ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => Navigator.of(
-          context,
-        ).push(MaterialPageRoute(builder: (_) => const NewInvoiceScreen())),
+        onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const NewInvoiceScreen())),
         label: const Text("New invoice"),
         icon: const Icon(Icons.add),
       ),
@@ -248,10 +177,7 @@ if (!context.mounted) return;
         children: [
           Icon(icon, color: color),
           const SizedBox(width: 8),
-          Text(
-            label,
-            style: TextStyle(color: color, fontWeight: FontWeight.w700),
-          ),
+          Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w700)),
         ],
       ),
     );
@@ -270,32 +196,13 @@ class _EmptyInvoices extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
-              Icons.receipt_long,
-              size: 72,
-              color: ForemanColors.white,
-            ),
+            const Icon(Icons.receipt_long, size: 72, color: ForemanColors.white),
             const SizedBox(height: 12),
-            const Text(
-              "No invoices yet",
-              style: TextStyle(
-                color: ForemanColors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
+            const Text("No invoices yet", style: TextStyle(color: ForemanColors.white, fontSize: 20, fontWeight: FontWeight.w700)),
             const SizedBox(height: 8),
-            const Text(
-              "Create your first invoice to get started.",
-              textAlign: TextAlign.center,
-              style: TextStyle(color: ForemanColors.white),
-            ),
+            const Text("Create your first invoice to get started.", textAlign: TextAlign.center, style: TextStyle(color: ForemanColors.white)),
             const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: onNew,
-              icon: const Icon(Icons.add),
-              label: const Text("New invoice"),
-            ),
+            ElevatedButton.icon(onPressed: onNew, icon: const Icon(Icons.add), label: const Text("New invoice")),
           ],
         ),
       ),

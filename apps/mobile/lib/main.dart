@@ -1,4 +1,4 @@
-import "package:flutter/material.dart";
+﻿import "package:flutter/material.dart";
 import "src/theme.dart";
 import "src/screens/home_screen.dart";
 import "src/screens/invoices_screen.dart";
