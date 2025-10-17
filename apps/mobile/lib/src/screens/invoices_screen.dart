@@ -5,6 +5,7 @@ import "../models/invoice.dart";
 import "../models/client.dart";
 import "../utils/utils.dart";
 import "new_invoice_screen.dart";
+import "invoice_preview_screen.dart";
 
 class InvoicesScreen extends StatelessWidget {
   const InvoicesScreen({super.key});
@@ -47,6 +48,9 @@ class InvoicesScreen extends StatelessWidget {
           );
           return Card(
             child: ListTile(
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => InvoicePreviewScreen(invoiceId: inv.id)),
+              ),
               title: Text(client.name),
               subtitle: Text("${_statusText(inv.status)}  •  ${inv.issueDate.toLocal().toIso8601String().substring(0,10)}"),
               trailing: Text(
