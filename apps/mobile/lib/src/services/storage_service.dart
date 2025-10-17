@@ -13,9 +13,25 @@ class StorageService {
     if (!await dir.exists()) {
       await dir.create(recursive: true);
     }
-
     final file = File("${dir.path}/$fileName.pdf");
     await file.writeAsBytes(bytes, flush: true);
     return file.path;
+  }
+
+  /// Copies a file to Documents/Foreman/archive/YYYY/MM/receipts/{fileName}
+  static Future<String> copyReceiptFile(File source, {required DateTime when, required String fileName}) async {
+    final docs = await getApplicationDocumentsDirectory();
+    final yyyy = when.year.toString().padLeft(4, "0");
+    final mm = when.month.toString().padLeft(2, "0");
+
+    final dir = Directory("${docs.path}/Foreman/archive/$yyyy/$mm/receipts");
+    if (!await dir.exists()) {
+      await dir.create(recursive: true);
+    }
+
+    final ext = source.path.split(".").last;
+    final dest = File("${dir.path}/$fileName.$ext");
+    await source.copy(dest.path);
+    return dest.path;
   }
 }
