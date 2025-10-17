@@ -8,12 +8,10 @@ class Invoice {
   final DateTime issueDate;
   final DateTime? dueDate;
   final List<InvoiceItem> items;
-  final double vatRate; // e.g., 0.2 for 20%
+  final double vatRate;
   final InvoiceStatus status;
-
-  // New (for records)
-  final String? jobId;    // optional job association
-  final String? pdfPath;  // saved PDF path
+  final String? jobId;
+  final String? pdfPath;
 
   Invoice({
     required this.id,
@@ -28,21 +26,31 @@ class Invoice {
   });
 
   double get subtotal => items.fold(0.0, (a, i) => a + i.lineTotal);
-  double get vat => items
-      .where((i) => i.vatApplicable)
-      .fold(0.0, (a, i) => a + (i.lineTotal * vatRate));
+  double get vat => items.where((i) => i.vatApplicable).fold(0.0, (a, i) => a + (i.lineTotal * vatRate));
   double get total => subtotal + vat;
 
-  // copyWith for updating pdfPath later
-  Invoice copyWith({String? pdfPath}) => Invoice(
+  // now supports both pdfPath and vatRate updates
+  Invoice copyWith({String? pdfPath, double? vatRate}) => Invoice(
+    id: id,
+    clientId: clientId,
+    issueDate: issueDate,
+    dueDate: dueDate,
+    items: items,
+    vatRate: vatRate ?? this.vatRate,
+    status: status,
+    jobId: jobId,
+    pdfPath: pdfPath ?? this.pdfPath,
+  );
+
+  Invoice copyWithStatus(InvoiceStatus s) => Invoice(
     id: id,
     clientId: clientId,
     issueDate: issueDate,
     dueDate: dueDate,
     items: items,
     vatRate: vatRate,
-    status: status,
+    status: s,
     jobId: jobId,
-    pdfPath: pdfPath ?? this.pdfPath,
+    pdfPath: pdfPath,
   );
 }

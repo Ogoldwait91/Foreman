@@ -1,17 +1,18 @@
 ﻿import "package:flutter/material.dart";
 import "../theme.dart";
 import "../widgets/balance_ring.dart";
+import "../data/app_store.dart";
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Demo numbers (we wire to state later)
-    const gross = 8420.00;
-    const vatOwed = 1403.33;
-    const taxOwed = 1263.00;
-    const yours = gross - vatOwed - taxOwed;
+    final store = AppStore();
+    final gross = store.monthlyGrossPaid;
+    final vatOwed = store.monthlyVatOwed;
+    final taxOwed = store.monthlyTaxReserve;
+    final yours = store.monthlyYours;
 
     return ListView(
       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -26,31 +27,13 @@ class HomeScreen extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Center(
-          child: BalanceRing(
-            size: 220,
-            yours: yours,
-            vat: vatOwed,
-            tax: taxOwed,
-          ),
+          child: BalanceRing(size: 220, yours: yours, vat: vatOwed, tax: taxOwed),
         ),
         const SizedBox(height: 8),
-        _kvRow("Income this month", "£${gross.toStringAsFixed(2)}"),
+        _kvRow("Income this month (paid)", "£${gross.toStringAsFixed(2)}"),
         _kvRow("VAT set aside", "£${vatOwed.toStringAsFixed(2)}", color: ForemanColors.amber),
         _kvRow("Tax reserved", "£${taxOwed.toStringAsFixed(2)}", color: ForemanColors.green),
-        const SizedBox(height: 8),
-        _tile(context, title: "Overdue invoices", value: "2", action: "Review", onTap: (){}),
-        _tile(context, title: "Draft invoices", value: "1", action: "Finish", onTap: (){}),
-        _tile(context, title: "Payments received (7d)", value: "£1,940", action: "View", onTap: (){}),
         const SizedBox(height: 20),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: ElevatedButton.icon(
-            onPressed: (){},
-            icon: const Icon(Icons.add),
-            label: const Text("New invoice"),
-          ),
-        ),
-        const SizedBox(height: 24),
       ],
     );
   }
@@ -64,16 +47,6 @@ class HomeScreen extends StatelessWidget {
           Text(k, style: const TextStyle(color: ForemanColors.white, fontWeight: FontWeight.w500)),
           Text(v, style: TextStyle(color: color, fontWeight: FontWeight.w700)),
         ],
-      ),
-    );
-  }
-
-  Widget _tile(BuildContext context, {required String title, required String value, required String action, required VoidCallback onTap}) {
-    return Card(
-      child: ListTile(
-        title: Text(title),
-        subtitle: Text(value, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 18)),
-        trailing: TextButton(onPressed: onTap, child: Text(action)),
       ),
     );
   }

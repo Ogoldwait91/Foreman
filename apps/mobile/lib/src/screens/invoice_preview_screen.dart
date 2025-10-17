@@ -5,7 +5,6 @@ import "../theme.dart";
 import "../data/app_store.dart";
 import "../models/invoice.dart";
 import "../models/client.dart";
-import "../utils/utils.dart";
 import "../services/pdf_service.dart";
 import "../services/storage_service.dart";
 
@@ -16,14 +15,8 @@ class InvoicePreviewScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final store = AppStore();
-    final inv = store.invoices.firstWhere(
-      (i) => i.id == invoiceId,
-      orElse: () => throw StateError("Invoice not found"),
-    );
-    final client = store.clients.firstWhere(
-      (c) => c.id == inv.clientId,
-      orElse: () => Client(id: "unknown", name: "Unknown"),
-    );
+    final inv = store.invoices.firstWhere((i) => i.id == invoiceId);
+    final client = store.clients.firstWhere((c) => c.id == inv.clientId, orElse: () => Client(id: "unknown", name: "Unknown"));
 
     Future<void> sharePdf() async {
       final data = await PdfService.buildInvoicePdf(client: client, invoice: inv, businessName: "Foreman User");
@@ -32,11 +25,7 @@ class InvoicePreviewScreen extends StatelessWidget {
 
     Future<void> savePdf() async {
       final data = await PdfService.buildInvoicePdf(client: client, invoice: inv, businessName: "Foreman User");
-      final path = await StorageService.saveInvoicePdf(
-        data,
-        issued: inv.issueDate,
-        fileName: "invoice_${inv.id}",
-      );
+      final path = await StorageService.saveInvoicePdf(data, issued: inv.issueDate, fileName: "invoice_${inv.id}");
       AppStore().setInvoicePdfPath(inv.id, path);
       // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Saved to $path")));
@@ -99,14 +88,12 @@ class InvoicePreviewScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: Column(
                 children: [
-                  const ListTile(
-                    title: Text("Items", style: TextStyle(fontWeight: FontWeight.w700)),
-                  ),
+                  const ListTile(title: Text("Items", style: TextStyle(fontWeight: FontWeight.w700))),
                   const Divider(height: 1),
                   ...inv.items.map((it) => ListTile(
                     title: Text(it.description),
                     subtitle: Text("Qty ${it.quantity}  •  £${it.unitPrice.toStringAsFixed(2)}${it.vatApplicable ? '  •  VAT' : ''}"),
-                    trailing: Text(money(it.lineTotal), style: const TextStyle(fontWeight: FontWeight.w700)),
+                    trailing: Text("£${it.lineTotal.toStringAsFixed(2)}", style: const TextStyle(fontWeight: FontWeight.w700)),
                   )),
                 ],
               ),
@@ -119,16 +106,16 @@ class InvoicePreviewScreen extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  _kv("Subtotal", money(inv.subtotal)),
-                  _kv("VAT (${(inv.vatRate*100).toStringAsFixed(0)}%)", money(inv.vat), color: ForemanColors.amber),
+                  _kv("Subtotal", "£${inv.subtotal.toStringAsFixed(2)}"),
+                  _kv("VAT (${(inv.vatRate*100).toStringAsFixed(0)}%)", "£${inv.vat.toStringAsFixed(2)}", color: ForemanColors.amber),
                   const Divider(height: 24),
-                  _kv("Total", money(inv.total), bold: true),
+                  _kv("Total", "£${inv.total.toStringAsFixed(2)}", bold: true),
                 ],
               ),
             ),
           ),
 
-          // CTA row
+          // CTA rows
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Column(
@@ -146,6 +133,14 @@ class InvoicePreviewScreen extends StatelessWidget {
                     Expanded(child: OutlinedButton.icon(onPressed: viewPdf, icon: const Icon(Icons.picture_as_pdf), label: const Text("View PDF"))),
                   ],
                 ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(child: OutlinedButton.icon(onPressed: () => AppStore().markInvoiceSent(inv.id), icon: const Icon(Icons.outgoing_mail), label: const Text("Mark sent"))),
+                    const SizedBox(width: 12),
+                    Expanded(child: ElevatedButton.icon(onPressed: () => AppStore().markInvoicePaid(inv.id), icon: const Icon(Icons.check_circle), label: const Text("Mark paid"))),
+                  ],
+                ),
               ],
             ),
           ),
@@ -155,31 +150,21 @@ class InvoicePreviewScreen extends StatelessWidget {
     );
   }
 
-  Widget _kv(String k, String v, {bool bold = false, Color? color}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(k),
-          Text(
-            v,
-            style: TextStyle(
-              fontWeight: bold ? FontWeight.w800 : FontWeight.w700,
-              color: color,
-              fontSize: bold ? 18 : 14,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget _kv(String k, String v, {bool bold = false, Color? color}) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 6),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(k),
+        Text(v, style: TextStyle(fontWeight: bold ? FontWeight.w800 : FontWeight.w700, color: color, fontSize: bold ? 18 : 14)),
+      ],
+    ),
+  );
 }
 
 class _StatusChip extends StatelessWidget {
   final InvoiceStatus status;
   const _StatusChip({required this.status});
-
   @override
   Widget build(BuildContext context) {
     Color bg; String text;
