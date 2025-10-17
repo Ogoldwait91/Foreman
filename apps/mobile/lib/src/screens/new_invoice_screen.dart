@@ -1,5 +1,6 @@
 ﻿import "package:flutter/material.dart";
 import "../theme.dart";
+import "../data/app_store.dart";
 
 class NewInvoiceScreen extends StatefulWidget {
   const NewInvoiceScreen({super.key});
@@ -26,12 +27,22 @@ class _NewInvoiceScreenState extends State<NewInvoiceScreen> {
   }
 
   void _saveDraft() {
-    if (_formKey.currentState?.validate() ?? false) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Invoice draft saved (in-memory).")),
-      );
-      Navigator.pop(context);
-    }
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    final qty = int.tryParse(_qty.text.trim()) ?? 1;
+    final price = double.tryParse(_unitPrice.text.trim()) ?? 0.0;
+
+    AppStore().addDraftInvoice(
+      clientName: _clientName.text.trim(),
+      itemDesc: _itemDesc.text.trim(),
+      qty: qty,
+      unitPrice: price,
+      vatApplicable: _vatApplicable,
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Invoice draft saved.")),
+    );
+    Navigator.pop(context);
   }
 
   @override

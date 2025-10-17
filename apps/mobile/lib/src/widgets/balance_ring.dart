@@ -62,7 +62,7 @@ class _RingPainter extends CustomPainter {
     final bg = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = thickness
-      ..color = ForemanColors.white.withOpacity(0.10)
+      ..color = ForemanColors.white.withValues(alpha: 0.10)
       ..strokeCap = StrokeCap.round;
 
     canvas.drawCircle(center, radius, bg);
