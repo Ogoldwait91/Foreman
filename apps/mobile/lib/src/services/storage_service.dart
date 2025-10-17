@@ -3,34 +3,50 @@ import "dart:typed_data";
 import "package:path_provider/path_provider.dart";
 
 class StorageService {
-  /// Saves bytes to Documents/Foreman/archive/YYYY/MM/invoices/{fileName}.pdf
-  static Future<String> saveInvoicePdf(Uint8List bytes, {required DateTime issued, required String fileName}) async {
+  static Future<Directory> _baseArchiveDir(DateTime d, {String? jobSlug, String sub = ""}) async {
     final docs = await getApplicationDocumentsDirectory();
-    final yyyy = issued.year.toString().padLeft(4, "0");
-    final mm = issued.month.toString().padLeft(2, "0");
+    final yyyy = d.year.toString().padLeft(4, "0");
+    final mm = d.month.toString().padLeft(2, "0");
 
-    final dir = Directory("${docs.path}/Foreman/archive/$yyyy/$mm/invoices");
-    if (!await dir.exists()) {
-      await dir.create(recursive: true);
+    final parts = <String>[
+      docs.path, "Foreman", "archive", yyyy, mm,
+    ];
+
+    if (jobSlug != null && jobSlug.isNotEmpty) {
+      parts.addAll(["jobs", jobSlug]);
     }
-    final file = File("${dir.path}/$fileName.pdf");
+    if (sub.isNotEmpty) {
+      parts.add(sub);
+    }
+
+    final dir = Directory(parts.join(Platform.pathSeparator));
+    if (!await dir.exists()) await dir.create(recursive: true);
+    return dir;
+  }
+
+  /// Invoices → .../invoices/invoice_{id}.pdf (with optional job subfolder)
+  static Future<String> saveInvoicePdf(
+    Uint8List bytes, {
+    required DateTime issued,
+    required String fileName,
+    String? jobSlug,
+  }) async {
+    final dir = await _baseArchiveDir(issued, jobSlug: jobSlug, sub: "invoices");
+    final file = File("${dir.path}${Platform.pathSeparator}$fileName.pdf");
     await file.writeAsBytes(bytes, flush: true);
     return file.path;
   }
 
-  /// Copies a file to Documents/Foreman/archive/YYYY/MM/receipts/{fileName}
-  static Future<String> copyReceiptFile(File source, {required DateTime when, required String fileName}) async {
-    final docs = await getApplicationDocumentsDirectory();
-    final yyyy = when.year.toString().padLeft(4, "0");
-    final mm = when.month.toString().padLeft(2, "0");
-
-    final dir = Directory("${docs.path}/Foreman/archive/$yyyy/$mm/receipts");
-    if (!await dir.exists()) {
-      await dir.create(recursive: true);
-    }
-
+  /// Receipts → .../receipts/receipt_{timestamp}.{ext} (with optional job subfolder)
+  static Future<String> copyReceiptFile(
+    File source, {
+    required DateTime when,
+    required String fileName,
+    String? jobSlug,
+  }) async {
     final ext = source.path.split(".").last;
-    final dest = File("${dir.path}/$fileName.$ext");
+    final dir = await _baseArchiveDir(when, jobSlug: jobSlug, sub: "receipts");
+    final dest = File("${dir.path}${Platform.pathSeparator}$fileName.$ext");
     await source.copy(dest.path);
     return dest.path;
   }

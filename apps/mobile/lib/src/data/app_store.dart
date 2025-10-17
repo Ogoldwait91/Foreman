@@ -4,6 +4,7 @@ import "../models/invoice.dart";
 import "../models/invoice_item.dart";
 import "../models/settings.dart";
 import "../models/receipt.dart";
+import "../models/job.dart";
 import "../utils/utils.dart";
 
 class AppStore extends ChangeNotifier {
@@ -14,12 +15,17 @@ class AppStore extends ChangeNotifier {
   final List<Client> clients = [];
   final List<Invoice> invoices = [];
   final List<Receipt> receipts = [];
+  final List<Job> jobs = [];
+
   Settings settings = const Settings();
 
   void seedIfEmpty() {
     if (clients.isEmpty) {
       final c = Client(id: quickId("client"), name: "Acme Bathrooms", email: "info@acmebath.co.uk");
       clients.add(c);
+    }
+    if (jobs.isEmpty) {
+      jobs.add(Job(id: quickId("job"), name: "Demo Job"));
     }
     if (invoices.isEmpty) {
       final demo = Invoice(
@@ -31,27 +37,59 @@ class AppStore extends ChangeNotifier {
           InvoiceItem(description: "Pipe & fittings", quantity: 1, unitPrice: 42.50, vatApplicable: true),
         ],
         vatRate: settings.vatRate,
+        jobId: jobs.first.id,
       );
       invoices.add(demo);
     }
   }
 
-  // —— invoices (unchanged bits omitted for brevity) ——
+  Job ensureJobByName(String name, {String? clientId}) {
+    final match = jobs.indexWhere((j) => j.name.trim().toLowerCase() == name.trim().toLowerCase());
+    if (match >= 0) return jobs[match];
+    final j = Job(id: quickId("job"), name: name.trim(), clientId: clientId);
+    jobs.add(j);
+    notifyListeners();
+    return j;
+    }
+
+  void addJob(String name, {String? clientId}) {
+    ensureJobByName(name, clientId: clientId);
+  }
+
   void addDraftInvoice({
-    required String clientName, required String itemDesc, required int qty, required double unitPrice, required bool vatApplicable,
+    required String clientName,
+    required String itemDesc,
+    required int qty,
+    required double unitPrice,
+    required bool vatApplicable,
+    String? jobName, // NEW
   }) {
     Client client;
     final idx = clients.indexWhere((c) => c.name.trim().toLowerCase() == clientName.trim().toLowerCase());
-    client = idx >= 0 ? clients[idx] : (clients..add(Client(id: quickId("client"), name: clientName))).last;
+    if (idx >= 0) {
+      client = clients[idx];
+    } else {
+      client = Client(id: quickId("client"), name: clientName);
+      clients.add(client);
+    }
+
+    String? jobId;
+    if (jobName != null && jobName.trim().isNotEmpty) {
+      jobId = ensureJobByName(jobName, clientId: client.id).id;
+    }
 
     final inv = Invoice(
       id: quickId("inv"),
       clientId: client.id,
       issueDate: DateTime.now(),
-      items: [ InvoiceItem(description: itemDesc, quantity: qty, unitPrice: unitPrice, vatApplicable: vatApplicable) ],
+      items: [
+        InvoiceItem(description: itemDesc, quantity: qty, unitPrice: unitPrice, vatApplicable: vatApplicable),
+      ],
       status: InvoiceStatus.draft,
       vatRate: settings.vatRate,
+      jobId: jobId,
     );
+
     invoices.add(inv);
     notifyListeners();
   }
@@ -63,36 +101,22 @@ class AppStore extends ChangeNotifier {
   void markInvoiceSent(String invoiceId) { final i = invoices.indexWhere((x) => x.id == invoiceId); if (i >= 0) { invoices[i] = invoices[i].copyWithStatus(InvoiceStatus.sent); notifyListeners(); } }
   void markInvoicePaid(String invoiceId) { final i = invoices.indexWhere((x) => x.id == invoiceId); if (i >= 0) { invoices[i] = invoices[i].copyWithStatus(InvoiceStatus.paid); notifyListeners(); } }
 
-  // —— receipts ——
   void addReceipt({required String path, required DateTime when, double? amount, String? note, String? jobId}) {
-    receipts.add(Receipt(
-      id: quickId("rcpt"),
-      path: path,
-      date: when,
-      amount: amount,
-      note: note,
-      jobId: jobId,
-    ));
+    receipts.add(Receipt(id: quickId("rcpt"), path: path, date: when, amount: amount, note: note, jobId: jobId));
     notifyListeners();
   }
 
-  // —— balance engine (MVP) ——
+  // Balance engine (same as before)...
   double get monthlyGrossPaid {
-    final now = DateTime.now();
-    bool isThisMonth(DateTime d) => d.year == now.year && d.month == now.month;
+    final now = DateTime.now(); bool isThisMonth(DateTime d) => d.year == now.year && d.month == now.month;
     double sum = 0.0;
-    for (final inv in invoices) {
-      if (inv.status == InvoiceStatus.paid && isThisMonth(inv.issueDate)) sum += inv.total;
-    }
+    for (final inv in invoices) { if (inv.status == InvoiceStatus.paid && isThisMonth(inv.issueDate)) sum += inv.total; }
     return sum;
   }
   double get monthlyVatOwed {
-    final now = DateTime.now();
-    bool isThisMonth(DateTime d) => d.year == now.year && d.month == now.month;
+    final now = DateTime.now(); bool isThisMonth(DateTime d) => d.year == now.year && d.month == now.month;
     double sum = 0.0;
-    for (final inv in invoices) {
-      if (inv.status == InvoiceStatus.paid && isThisMonth(inv.issueDate)) sum += inv.vat;
-    }
+    for (final inv in invoices) { if (inv.status == InvoiceStatus.paid && isThisMonth(inv.issueDate)) sum += inv.vat; }
     return sum;
   }
   double get monthlyTaxReserve => monthlyGrossPaid * settings.taxReserveRate;
