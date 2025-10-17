@@ -1,6 +1,6 @@
 ﻿import "package:flutter/material.dart";
+import 'balance_ring.dart';
 import "../theme.dart";
-import "../widgets/balance_ring.dart";
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});

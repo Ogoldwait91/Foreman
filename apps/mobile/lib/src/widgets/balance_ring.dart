@@ -1,4 +1,4 @@
-﻿import "dart:math" as math;
+import "dart:math" as math;
 import "package:flutter/material.dart";
 import "../theme.dart";
 
@@ -37,7 +37,7 @@ class BalanceRing extends StatelessWidget {
           children: [
             const Text("Yours", style: TextStyle(color: ForemanColors.white, fontSize: 14)),
             Text(
-              "£${yours.toStringAsFixed(0)}",
+              "�${yours.toStringAsFixed(0)}",
               style: const TextStyle(color: ForemanColors.white, fontWeight: FontWeight.w800, fontSize: 26),
             ),
           ],
@@ -62,7 +62,7 @@ class _RingPainter extends CustomPainter {
     final bg = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = thickness
-      ..color = ForemanColors.white.withOpacity(0.10)
+      ..color = ForemanColors.white.withValues(alpha: 0.10)
       ..strokeCap = StrokeCap.round;
 
     canvas.drawCircle(center, radius, bg);

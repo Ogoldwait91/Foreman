@@ -1,4 +1,4 @@
-﻿import "package:flutter/material.dart";
+import "package:flutter/material.dart";
 import "src/theme.dart";
 import "src/screens/home_screen.dart";
 import "src/screens/invoices_screen.dart";
@@ -34,7 +34,7 @@ class _ForemanAppState extends State<ForemanApp> {
         body: SafeArea(child: _pages[_index]),
         bottomNavigationBar: NavigationBar(
           backgroundColor: ForemanColors.navy,
-          indicatorColor: ForemanColors.teal.withOpacity(.15),
+          indicatorColor: ForemanColors.teal.withValues(alpha: .15),
           selectedIndex: _index,
           labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
           onDestinationSelected: (i) => setState(() => _index = i),
