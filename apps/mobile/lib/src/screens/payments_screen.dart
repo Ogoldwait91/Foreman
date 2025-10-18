@@ -15,11 +15,12 @@ class PaymentsScreen extends StatelessWidget {
 }
 
 class _Hint extends StatelessWidget {
-  final String text; const _Hint(this.text, );
+  final String text; const _Hint(this.text);
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.all(16),
     child: Text(text, style: const TextStyle(color: ForemanColors.white)),
   );
 }
+
 
